@@ -55,7 +55,6 @@ contract Animals is ERC721PresetMinterPauserAutoId, Garage {
 
     function purchase() public payable override {
         require(msg.value >= price);
-
         // Send ethers to developer
         (bool success, ) = developer.call{value: msg.value}("");
         require(success);

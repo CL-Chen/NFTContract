@@ -53,25 +53,6 @@ contract Animals is ERC721PresetMinterPauserAutoId, Garage {
         metaDataTracker[currentTokenId] = uint2str(random() % 25);
     }
 
-    function random() private view returns (uint256) {
-        return
-            uint256(
-                (
-                    keccak256(
-                        abi.encodePacked(
-                            ((block.timestamp / 1000) *
-                                block.difficulty *
-                                10 *
-                                block.number) /
-                                12 +
-                                _tokenIdTracker.current() *
-                                _privateTracker.current()
-                        )
-                    )
-                )
-            );
-    }
-
     function purchase() public payable override {
         require(msg.value >= price);
 
@@ -103,19 +84,22 @@ contract Animals is ERC721PresetMinterPauserAutoId, Garage {
     }
 
     function facilitateSale(uint256 tokenId) public payable {
-        require(msg.value >= (getResalePrice(tokenId) / 1e18));
+        require(msg.value >= getResalePrice(tokenId));
 
         address ownerAdd = ownerOf(tokenId);
         (bool success, ) = ownerAdd.call{value: (msg.value)}("");
         require(success);
 
         this.transferFrom(ownerAdd, msg.sender, tokenId);
+
         _privateTracker.increment();
     }
 
     function setResalePrice(uint256 setPrice, uint256 tokenId) public {
         require(msg.sender == ownerOf(tokenId));
         approve(address(this), tokenId);
+
+        //set price in wei, i.e. 1e18 * etherPrice
         resalePrice[tokenId] = setPrice;
         _privateTracker.increment();
     }
@@ -139,6 +123,25 @@ contract Animals is ERC721PresetMinterPauserAutoId, Garage {
             bytes(baseURI).length > 0
                 ? string(abi.encodePacked(baseURI, metaNum))
                 : "";
+    }
+
+    function random() private view returns (uint256) {
+        return
+            uint256(
+                (
+                    keccak256(
+                        abi.encodePacked(
+                            ((block.timestamp / 1000) *
+                                block.difficulty *
+                                10 *
+                                block.number) /
+                                12 +
+                                _tokenIdTracker.current() *
+                                _privateTracker.current()
+                        )
+                    )
+                )
+            );
     }
 
     function uint2str(uint256 _i)
